@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { 
   ShieldAlert, 
   ShieldCheck, 
@@ -15,9 +16,9 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://turtleneck-m5bc.onrender.com';
 
-function App() {
+function Dashboard() {
   const [activeTab, setActiveTab] = useState('scanner');
   const [domainInput, setDomainInput] = useState('');
   const [batchInput, setBatchInput] = useState('');
@@ -555,6 +556,29 @@ function App() {
         )}
       </main>
     </div>
+  );
+}
+
+function NotFound() {
+  const navigate = useNavigate();
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', textAlign: 'center', color: 'var(--text-primary)' }}>
+      <AlertTriangle size={64} style={{ color: 'var(--color-phish)', marginBottom: '1rem' }} />
+      <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>404</h1>
+      <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginBottom: '2rem' }}>Page not found.</p>
+      <button onClick={() => navigate('/')} className="scan-btn" style={{ padding: '0.75rem 1.5rem', width: 'auto' }}>
+        Go Back to Main Screen
+      </button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

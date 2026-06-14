@@ -2,6 +2,10 @@
 
 Turtleneck is a production-grade, real-time Phishing and Suspected Domain Detection platform. The project features a reusable **Python Feature Engineering Engine**, an optimized **FastAPI REST API**, database logging with **PostgreSQL/SQLite**, a modern **Vite + React Dark Mode Dashboard**, and **Docker containerization**.
 
+### 🚀 Live Demos
+- **Frontend Dashboard**: [https://turtleneckai.netlify.app](https://turtleneckai.netlify.app/)
+- **Backend API Docs**: [https://turtleneck-m5bc.onrender.com/docs](https://turtleneck-m5bc.onrender.com/docs)
+
 ---
 
 ## 🏗️ System Architecture

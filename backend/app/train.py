@@ -129,10 +129,11 @@ def run_training():
     model = XGBClassifier(
         objective="binary:logistic",
         n_estimators=300,
-        max_depth=8,
+        max_depth=6,
         learning_rate=0.05,
         subsample=0.8,
-        colsample_bytree=0.8,
+        colsample_bytree=0.5,
+        colsample_bylevel=0.5,
         random_state=42,
     )
     model.fit(X_train, y_train)

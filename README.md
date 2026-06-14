@@ -136,33 +136,33 @@ The model is trained on a balanced dataset of **65,126 domains** using **XGBoost
 
 | Metric | Score |
 |---|---|
-| **Accuracy** | `92.07%` |
-| **Precision** | `92.55%` |
-| **Recall** | `92.07%` |
-| **F1 Score** | `92.04%` |
+| **Accuracy** | `92.11%` |
+| **Precision** | `92.56%` |
+| **Recall** | `92.11%` |
+| **F1 Score** | `92.09%` |
 
 ### Confusion Matrix (Test Set)
 
 ```text
                   Predicted Legitimate    Predicted Phishing
-Actual Legitimate       4757 (TN)               128 (FP)
-Actual Phishing          647 (FN)              4237 (TP)
+Actual Legitimate       4750 (TN)               135 (FP)
+Actual Phishing          636 (FN)              4248 (TP)
 ```
 
 ### Top 10 Feature Importances
 
 | Rank | Feature Name | Importance Score | Category |
 | :---: | :--- | :---: | :--- |
-| **1** | `subdomain_count` | **0.662863** | Structure |
-| **2** | `is_suspicious_tld` | **0.115331** | Structure |
-| **3** | `length` | **0.054148** | Structure |
-| **4** | `is_common_tld` | **0.021780** | Structure |
-| **5** | `entropy` | **0.019179** | Structure |
-| **6** | `brand_match` | **0.016792** | Lexical |
-| **7** | `min_brand_distance` | **0.016697** | Lexical |
-| **8** | `hyphen_count` | **0.015555** | Structure |
-| **9** | `digit_count` | **0.015325** | Structure |
-| **10** | `is_country_code_tld` | **0.015295** | Structure |
+| **1** | `subdomain_count` | **0.256257** | Structure |
+| **2** | `length` | **0.157096** | Structure |
+| **3** | `entropy` | **0.130459** | Structure |
+| **4** | `is_suspicious_tld` | **0.093578** | Structure |
+| **5** | `special_char_count` | **0.081872** | Structure |
+| **6** | `is_common_tld` | **0.054165** | Structure |
+| **7** | `hyphen_count` | **0.053472** | Structure |
+| **8** | `min_brand_distance` | **0.045878** | Lexical |
+| **9** | `digit_count` | **0.039752** | Structure |
+| **10** | `is_country_code_tld` | **0.031477** | Structure |
 
 ---
 

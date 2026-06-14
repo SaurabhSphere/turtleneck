@@ -6,6 +6,9 @@ Turtleneck is a production-grade, real-time Phishing and Suspected Domain Detect
 - **Frontend Dashboard**: [https://turtleneckai.netlify.app](https://turtleneckai.netlify.app/)
 - **Backend API Docs**: [https://turtleneck-m5bc.onrender.com/docs](https://turtleneck-m5bc.onrender.com/docs)
 
+> [!NOTE]
+> The backend API is deployed on a free Render tier, which spins down after periods of inactivity. To combat "cold start" latency, the frontend sends an asynchronous "wake-up" ping to the backend root (`/`) the moment the dashboard loads in your browser. This ensures the backend starts up before you even submit your first domain analysis request!
+
 ---
 
 ## 🏗️ System Architecture
@@ -321,6 +324,22 @@ If you want to rebuild the full `combined_domains.csv` from scratch, download th
 ### 4. Recent Scan Logs
 * **Endpoint**: `GET /api/history`
 * **Response**: A list of recently scanned domain records.
+
+---
+
+## 🌍 Deployment Details
+
+The Turtleneck application utilizes a modern, decoupled deployment strategy, allowing both the frontend and backend to scale and deploy independently.
+
+### Frontend Deployment (Netlify)
+The Vite + React frontend is deployed as a static Single Page Application (SPA) on **Netlify**. 
+- **Routing**: A `_redirects` file is included in the `public/` directory containing `/* /index.html 200` to ensure Netlify correctly hands over routing to `react-router-dom`, supporting pages like the custom 404 screen.
+- **Environment Integration**: The frontend reads the `VITE_API_URL` environment variable to connect to the backend API.
+
+### Backend Deployment (Render)
+The FastAPI backend is deployed as a Web Service on **Render**.
+- **Cold Starts & Optimization**: Render's free tier automatically suspends the application after 15 minutes of inactivity. To prevent users from waiting 30-50 seconds for their first domain scan, the React frontend is configured to send a lightweight, asynchronous `GET /` request the moment the page loads. This "wake-up ping" begins spinning up the backend instance while the user navigates the UI, drastically reducing perceived latency.
+- **CORS Configuration**: The backend's `CORSMiddleware` strictly whitelists the Netlify domain to prevent unauthorized external access.
 
 ---
 

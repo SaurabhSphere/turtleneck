@@ -71,6 +71,13 @@ function Dashboard() {
     }
   }, [activeTab]);
 
+  // Wake-up ping to backend
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/`).catch(() => {
+      // Ignore errors, we just want to ping
+    });
+  }, []);
+
   const handleSingleScan = async (e) => {
     e.preventDefault();
     const targetDomain = domainInput.trim();

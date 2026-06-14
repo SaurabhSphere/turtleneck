@@ -123,6 +123,14 @@ def prepare_combined_dataset(workspace_dir: str) -> pd.DataFrame:
         extra_phish = pd.concat([extra_phish] * 500, ignore_index=True)
         combined = pd.concat([combined, extra_legit, extra_phish], ignore_index=True)
         
+        # Inject Active Learning reports
+        mistakes_df = _get_reported_mistakes_df()
+        if not mistakes_df.empty:
+            mistakes_df.drop_duplicates(subset=["domain"], keep="last", inplace=True)
+            mistakes_df = pd.concat([mistakes_df] * 500, ignore_index=True)
+            combined = pd.concat([combined, mistakes_df], ignore_index=True)
+            print(f"Injected {len(mistakes_df)//500} unique active learning reports (500x weighted).")
+        
         return combined
 
     elif combined_path:
@@ -158,9 +166,34 @@ def prepare_combined_dataset(workspace_dir: str) -> pd.DataFrame:
         extra_phish = pd.concat([extra_phish] * 500, ignore_index=True)
         df = pd.concat([df, extra_legit, extra_phish], ignore_index=True)
         
+        # Inject Active Learning reports
+        mistakes_df = _get_reported_mistakes_df()
+        if not mistakes_df.empty:
+            mistakes_df.drop_duplicates(subset=["domain"], keep="last", inplace=True)
+            mistakes_df = pd.concat([mistakes_df] * 500, ignore_index=True)
+            df = pd.concat([df, mistakes_df], ignore_index=True)
+            print(f"Injected {len(mistakes_df)//500} unique active learning reports (500x weighted).")
+            
         return df
     else:
         raise FileNotFoundError(
             "Could not find combined_domains.csv or the raw files "
             "(verified_online.csv, openphish.csv, top-1m.csv) to build it."
         )
+
+def _get_reported_mistakes_df() -> pd.DataFrame:
+    try:
+        from app.database import SessionLocal
+        from app.models import ReportedMistake
+        db = SessionLocal()
+        try:
+            mistakes = db.query(ReportedMistake).all()
+            if not mistakes:
+                return pd.DataFrame(columns=["domain", "label"])
+            data = [{"domain": m.domain, "label": m.corrected_label} for m in mistakes]
+            return pd.DataFrame(data)
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"Warning: Could not fetch reported mistakes: {e}")
+        return pd.DataFrame(columns=["domain", "label"])

@@ -135,6 +135,17 @@ Threat actors use Unicode characters to construct homoglyph domains that appear 
 
 ---
 
+## ♻️ Active Learning Engine
+
+Turtleneck features a built-in **Active Learning Feedback Loop** to adapt to zero-day phishing threats and correct false positives dynamically.
+
+1. **User Reporting**: The React Dashboard allows users to flag misclassified domains directly from the single-scan UI. These reports are safely logged to a `ReportedMistake` table in the database.
+2. **Dynamic Feature Extraction**: When retraining is triggered, the backend pulls these user reports. If a newly reported domain has never been seen before, the system automatically runs it through the canonical Python feature extraction engine to generate its 24 features on the fly.
+3. **Loss Penalization (Mathematical Weighting)**: To ensure the XGBoost model definitively learns from user corrections, the reported domains are injected into the training dataset with a massive **500x mathematical duplication weight**. This forces the gradient boosting loss function to heavily penalize making that specific mistake again.
+4. **Hot-swapping**: The retraining pipeline runs as a FastAPI background task. Upon completion, the new `.joblib` models are serialized and immediately loadable without server downtime.
+
+---
+
 ## 📈 Model Performance Summary (XGBoost)
 
 The model is trained on a balanced dataset of **65,126 domains** using **XGBoost Classifier** with a stratified `70 / 15 / 15` split.

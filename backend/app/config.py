@@ -15,4 +15,3 @@ if DATABASE_URL:
     elif DATABASE_URL.startswith("postgresql://"):
         DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-print(f"--- DEBUG: DATABASE_URL is: {DATABASE_URL} ---")

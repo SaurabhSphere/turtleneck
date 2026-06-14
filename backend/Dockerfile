@@ -18,6 +18,5 @@ COPY models/ ./models/
 EXPOSE 8000
 
 ENV PORT=8000
-ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/turtleneck
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

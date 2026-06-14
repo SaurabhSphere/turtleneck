@@ -80,32 +80,47 @@ def run_training():
     print(f"\nBalanced dataset: {df['label'].value_counts().to_dict()}")
 
     # ── 3. Feature Extraction ────────────────────────────────────────────
-    features_csv = find_file("domain_features.csv", WORKSPACE_DIR)
-    final_df = None
+    features_csv = find_file("domain_features_v3.csv", WORKSPACE_DIR)
+    if not features_csv:
+        features_csv = find_file("domain_features_v2.csv", WORKSPACE_DIR)
+    if not features_csv:
+        features_csv = find_file("domain_features.csv", WORKSPACE_DIR)
+
+    cached_features_df = None
     if features_csv:
         print(f"Loading pre-computed features: {features_csv}")
         temp_df = pd.read_csv(features_csv)
-        # Check if all required features are present
         if all(col in temp_df.columns for col in FEATURE_ORDER):
-            final_df = temp_df
+            cached_features_df = temp_df.drop_duplicates(subset=["domain"])
         else:
-            print("Pre-computed features are missing required columns. Re-extracting from scratch...")
+            print("Pre-computed features missing columns. Will re-extract.")
 
-    if final_df is None:
-        print("Extracting features (this may take a few minutes)...")
-        features = df["domain"].apply(extract_features)
+    unique_domains_df = df.drop_duplicates(subset=["domain"])[["domain", "label"]]
+    
+    if cached_features_df is not None:
+        missing_domains = set(unique_domains_df["domain"]) - set(cached_features_df["domain"])
+        if missing_domains:
+            print(f"Extracting features for {len(missing_domains)} new domains...")
+            missing_df = pd.DataFrame({"domain": list(missing_domains)})
+            missing_features = missing_df["domain"].apply(extract_features)
+            missing_feature_df = pd.DataFrame(missing_features.tolist())
+            new_features_df = pd.concat([missing_df, missing_feature_df], axis=1)
+            cached_features_df = pd.concat([cached_features_df, new_features_df], ignore_index=True)
+    else:
+        print("Extracting features from scratch...")
+        features = unique_domains_df["domain"].apply(extract_features)
         feature_df = pd.DataFrame(features.tolist())
-        final_df = pd.concat(
-            [df.reset_index(drop=True), feature_df.reset_index(drop=True)], axis=1
+        cached_features_df = pd.concat(
+            [unique_domains_df.reset_index(drop=True), feature_df.reset_index(drop=True)], axis=1
         )
-        data_dir = os.path.join(WORKSPACE_DIR, "data")
-        out_path = (
-            os.path.join(data_dir, "domain_features_v3.csv")
-            if os.path.isdir(data_dir)
-            else os.path.join(WORKSPACE_DIR, "domain_features_v3.csv")
-        )
-        final_df.to_csv(out_path, index=False)
-        print(f"Features saved to {out_path}")
+
+    # Save unique features back to cache to prevent bloat
+    data_dir = os.path.join(WORKSPACE_DIR, "data")
+    out_path = os.path.join(data_dir, "domain_features_v3.csv") if os.path.isdir(data_dir) else os.path.join(WORKSPACE_DIR, "domain_features_v3.csv")
+    cached_features_df.drop(columns=["label"], errors="ignore").to_csv(out_path, index=False)
+    
+    # Merge features back onto the full (duplicated/augmented) dataset
+    final_df = df.merge(cached_features_df.drop(columns=["label"], errors="ignore"), on="domain", how="left")
 
     # ── 4. Prepare X / y ─────────────────────────────────────────────────
     X = final_df[FEATURE_ORDER]

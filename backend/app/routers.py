@@ -4,7 +4,7 @@ API Router
 All REST endpoints for the Turtleneck Phishing Detection API.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -15,8 +15,11 @@ from .schemas import (
     BatchPredictRequest,
     BatchPredictResponse,
     StatsResponse,
+    ReportMistakeRequest,
+    GenericMessageResponse,
 )
 from . import services
+from .train import run_training
 
 router = APIRouter(prefix="/api")
 
@@ -66,3 +69,24 @@ def get_history(limit: int = 50, db: Session = Depends(get_db)):
         return services.get_scan_history(db, limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"History error: {str(e)}")
+
+
+@router.post("/report", response_model=GenericMessageResponse)
+def report_mistake(request: ReportMistakeRequest, db: Session = Depends(get_db)):
+    """Report a misclassified domain to be used for future model retraining."""
+    if not request.domain.strip() or request.corrected_label not in ["legitimate", "phishing"]:
+        raise HTTPException(status_code=400, detail="Invalid domain or label.")
+    
+    try:
+        services.save_reported_mistake(request.domain, request.corrected_label, db)
+        return GenericMessageResponse(message=f"Successfully flagged {request.domain} as {request.corrected_label} for Active Learning.")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save report: {str(e)}")
+
+
+@router.post("/retrain", response_model=GenericMessageResponse)
+def trigger_retrain(background_tasks: BackgroundTasks):
+    """Trigger the XGBoost active learning pipeline in the background."""
+    background_tasks.add_task(run_training)
+    return GenericMessageResponse(message="Model retraining initiated in the background. This will take a few minutes.")

@@ -37,6 +37,12 @@ function Dashboard() {
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Active Learning states
+  const [reportMsg, setReportMsg] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
+  const [retrainMsg, setRetrainMsg] = useState('');
+  const [isRetraining, setIsRetraining] = useState(false);
 
   // Fetch stats and history
   const fetchStats = async () => {
@@ -120,6 +126,38 @@ function Dashboard() {
       setErrorMsg(err.response?.data?.detail || 'Failed to run batch scans.');
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleReportMistake = async (domain, currentLabel) => {
+    const correctedLabel = currentLabel === 'phishing' ? 'legitimate' : 'phishing';
+    setIsReporting(true);
+    setReportMsg('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/report`, {
+        domain: domain,
+        corrected_label: correctedLabel
+      });
+      setReportMsg(response.data.message);
+    } catch (err) {
+      console.error(err);
+      setReportMsg(err.response?.data?.detail || 'Failed to report mistake.');
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
+  const handleRetrain = async () => {
+    setIsRetraining(true);
+    setRetrainMsg('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/retrain`);
+      setRetrainMsg(response.data.message);
+    } catch (err) {
+      console.error(err);
+      setRetrainMsg(err.response?.data?.detail || 'Failed to trigger retraining.');
+    } finally {
+      setIsRetraining(false);
     }
   };
 
@@ -263,6 +301,25 @@ function Dashboard() {
                         <span className="gauge-text">{Math.round(singleResult.confidence * 100)}%</span>
                       </div>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Confidence Score</span>
+                      
+                      {/* Report Mistake Button */}
+                      <div style={{ marginTop: '1.5rem', width: '100%' }}>
+                        <button 
+                          className="tab-btn" 
+                          onClick={() => handleReportMistake(singleResult.domain, singleResult.label)}
+                          disabled={isReporting || reportMsg.includes('Successfully')}
+                          style={{ width: '100%', borderRadius: '0.5rem', fontSize: '0.8rem', padding: '0.5rem', justifyContent: 'center', background: 'rgba(255,255,255,0.05)' }}
+                        >
+                          {isReporting ? 'Reporting...' : 
+                           reportMsg.includes('Successfully') ? 'Reported!' :
+                           `Flag as ${singleResult.label === 'phishing' ? 'Legitimate' : 'Phishing'}`}
+                        </button>
+                        {reportMsg && (
+                          <p style={{ fontSize: '0.7rem', marginTop: '0.5rem', color: reportMsg.includes('Failed') ? 'var(--color-phish)' : 'var(--color-legit)' }}>
+                            {reportMsg}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Features Panel */}
@@ -501,6 +558,29 @@ function Dashboard() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Admin Panel: Active Learning */}
+                <div className="chart-card" style={{ marginTop: '2rem', border: '1px solid rgba(139, 92, 246, 0.3)', background: 'rgba(139, 92, 246, 0.05)' }}>
+                  <h3 className="chart-header" style={{ color: 'var(--accent-purple)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Flame size={18} /> Active Learning Engine
+                  </h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                    Manually trigger a background job to retrain the XGBoost model using the latest user-reported mistakes. This ensures the model dynamically adapts to zero-day phishing trends.
+                  </p>
+                  <button 
+                    className="scan-btn" 
+                    onClick={handleRetrain} 
+                    disabled={isRetraining}
+                    style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    {isRetraining ? 'Triggering...' : 'Trigger Model Retraining'}
+                  </button>
+                  {retrainMsg && (
+                    <p style={{ fontSize: '0.875rem', marginTop: '1rem', color: retrainMsg.includes('Failed') ? 'var(--color-phish)' : 'var(--color-legit)' }}>
+                      {retrainMsg}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

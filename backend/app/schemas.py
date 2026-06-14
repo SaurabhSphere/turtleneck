@@ -30,3 +30,12 @@ class StatsResponse(BaseModel):
     total_scanned: int
     label_counts: Dict[str, int]
     top_risky_tlds: List[Dict[str, Any]]
+
+
+class ReportMistakeRequest(BaseModel):
+    domain: str = Field(..., examples=["example.com"])
+    corrected_label: str = Field(..., examples=["legitimate", "phishing"])
+
+
+class GenericMessageResponse(BaseModel):
+    message: str

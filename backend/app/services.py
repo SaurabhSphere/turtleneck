@@ -9,10 +9,22 @@ from collections import Counter
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from .models import DomainScan
+from .models import DomainScan, ReportedMistake
 from .inference import predict_domain
 from .features import get_additional_indicators
 from .schemas import DomainPredictResponse
+
+
+def save_reported_mistake(domain: str, corrected_label: str, db: Session):
+    """Save a user-reported misclassification to the active learning pipeline."""
+    mistake = ReportedMistake(
+        domain=domain.lower().strip(),
+        corrected_label=corrected_label.lower().strip()
+    )
+    db.add(mistake)
+    db.commit()
+    db.refresh(mistake)
+    return mistake
 
 
 def run_single_prediction(domain: str, db: Session) -> DomainPredictResponse:

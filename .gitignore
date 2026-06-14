@@ -1,29 +1,40 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.db
+venv/
+backend/venv/
 
-node_modules
-dist
-dist-ssr
+# Environment
+.env
+backend/.env
+
+# Large datasets (sample_domains.csv IS committed)
+data/combined_domains.csv
+data/verified_online.csv
+data/top-1m.csv
+data/domain_features*.csv
+
+# Node
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# AnnoForge local data
-.env
-data/
-
-
-# Editor directories and files
+# IDE
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Logs
+logs/
+*.log
+npm-debug.log*

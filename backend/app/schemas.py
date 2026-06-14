@@ -1,11 +1,15 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Dict, Any
 from datetime import datetime
 
+
 class DomainPredictRequest(BaseModel):
-    domain: str = Field(..., example="example-login.tk")
+    domain: str = Field(..., examples=["example-login.tk"])
+
 
 class DomainPredictResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     domain: str
     label: str
     confidence: float
@@ -13,14 +17,14 @@ class DomainPredictResponse(BaseModel):
     features: Dict[str, Any]
     additional_indicators: Dict[str, Any]
 
-    class Config:
-        from_attributes = True
 
 class BatchPredictRequest(BaseModel):
-    domains: List[str] = Field(..., example=["google.com", "example-login.tk"])
+    domains: List[str] = Field(..., examples=[["google.com", "example-login.tk"]])
+
 
 class BatchPredictResponse(BaseModel):
     predictions: List[DomainPredictResponse]
+
 
 class StatsResponse(BaseModel):
     total_scanned: int

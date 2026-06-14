@@ -9,3 +9,5 @@ scikit-learn>=1.2.2
 python-dotenv>=1.0.0
 pydantic>=2.0
 python-multipart>=0.0.6
+tldextract>=3.4.0
+Levenshtein>=0.21.0

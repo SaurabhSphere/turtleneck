@@ -1,0 +1,25 @@
+name: Split Backend Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push Backend
+        run: |
+          git subtree split --prefix=backend -b backend-temp
+          git push origin backend-temp:backend --force
+
+      - name: Push Frontend
+        run: |
+          git subtree split --prefix=frontend -b frontend-temp
+          git push origin frontend-temp:frontend --force

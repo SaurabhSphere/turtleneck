@@ -101,12 +101,27 @@ def prepare_combined_dataset(workspace_dir: str) -> pd.DataFrame:
                 "tiktok.com",
                 "www.tiktok.com",
                 "tiktokshop.com",
-                "partner.tiktokshop.com"
+                "partner.tiktokshop.com",
+                "turtleneckai.netlify.app",
+                "saurabh-portfolio.vercel.app",
+                "my-cool-project.onrender.com",
+                "react-dashboard-demo.github.io"
             ],
-            "label": ["legitimate"] * 6
+            "label": ["legitimate"] * 10
         })
-        combined = pd.concat([combined, extra_legit], ignore_index=True)
+        extra_phish = pd.DataFrame({
+            "domain": [
+                "secure-paypal-login.netlify.app",
+                "apple-verify-account.vercel.app",
+                "amazon-support-help.onrender.com",
+                "microsoft-auth-portal.github.io"
+            ],
+            "label": ["phishing"] * 4
+        })
         combined.drop_duplicates(subset=["domain"], keep="last", inplace=True)
+        extra_legit = pd.concat([extra_legit] * 500, ignore_index=True)
+        extra_phish = pd.concat([extra_phish] * 500, ignore_index=True)
+        combined = pd.concat([combined, extra_legit, extra_phish], ignore_index=True)
         
         return combined
 
@@ -121,12 +136,27 @@ def prepare_combined_dataset(workspace_dir: str) -> pd.DataFrame:
                 "tiktok.com",
                 "www.tiktok.com",
                 "tiktokshop.com",
-                "partner.tiktokshop.com"
+                "partner.tiktokshop.com",
+                "turtleneckai.netlify.app",
+                "saurabh-portfolio.vercel.app",
+                "my-cool-project.onrender.com",
+                "react-dashboard-demo.github.io"
             ],
-            "label": ["legitimate"] * 6
+            "label": ["legitimate"] * 10
         })
-        df = pd.concat([df, extra_legit], ignore_index=True)
+        extra_phish = pd.DataFrame({
+            "domain": [
+                "secure-paypal-login.netlify.app",
+                "apple-verify-account.vercel.app",
+                "amazon-support-help.onrender.com",
+                "microsoft-auth-portal.github.io"
+            ],
+            "label": ["phishing"] * 4
+        })
         df.drop_duplicates(subset=["domain"], keep="last", inplace=True)
+        extra_legit = pd.concat([extra_legit] * 500, ignore_index=True)
+        extra_phish = pd.concat([extra_phish] * 500, ignore_index=True)
+        df = pd.concat([df, extra_legit, extra_phish], ignore_index=True)
         
         return df
     else:

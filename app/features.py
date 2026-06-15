@@ -404,7 +404,7 @@ def extract_features(domain: str) -> dict:
         "has_support": int("support" in domain_clean),
         "has_payment": int("payment" in domain_clean),
         
-        "brand_match": int(any(brand in domain_clean for brand in KNOWN_BRANDS)),
+        "brand_match": int(root in KNOWN_BRANDS),
         "known_brand_root": known_brand_root(domain_clean),
         "min_brand_distance": min_brand_distance(domain_clean),
         
@@ -446,3 +446,46 @@ def get_additional_indicators(domain: str) -> dict:
         "has_mixed_script": has_homoglyphs(domain_clean),
         "tld_is_risky": suffix in HIGH_RISK_TLDS
     }
+
+
+def is_valid_url_or_domain(input_str: str) -> bool:
+    """
+    Validate if a string is a valid URL or domain.
+
+    Returns True if the input is a valid IP address or a standard domain
+    containing a name and a TLD suffix.
+    """
+    if not input_str:
+        return False
+
+    domain_clean = input_str.strip().lower()
+
+    # Reject if contains whitespace
+    if any(c.isspace() for c in domain_clean):
+        return False
+
+    # Strip protocol, path, and port
+    domain_clean = re.sub(r'^https?://', '', domain_clean).split('/')[0].split(':')[0]
+
+    if not domain_clean:
+        return False
+
+    # Check if IP address
+    if is_ip_address(domain_clean):
+        return True
+
+    # Check standard domain structure (must contain at least one dot)
+    if "." not in domain_clean:
+        return False
+
+    parts = domain_clean.split(".")
+    tld = parts[-1]
+    
+    # TLD must be at least 2 characters and alphanumeric (allows custom/mock TLDs)
+    if len(tld) < 2 or not tld.isalnum():
+        return False
+
+    # Ensure there is a domain name part before the dot
+    domain_name = "".join(parts[:-1])
+    return bool(domain_name)
+

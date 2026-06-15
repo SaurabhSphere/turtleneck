@@ -12,7 +12,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from app.main import app
 from app.database import Base, get_db
-from app.features import entropy, is_ip_address, has_homoglyphs, extract_features, get_additional_indicators
+from app.features import (
+    entropy,
+    is_ip_address,
+    has_homoglyphs,
+    extract_features,
+    get_additional_indicators,
+    is_valid_url_or_domain,
+)
 from app.inference import predict_domain
 from app.models import DomainScan
 from app.services import run_single_prediction, run_batch_prediction, get_aggregate_stats, get_scan_history
@@ -91,6 +98,24 @@ class TestThreatIntelPipeline(unittest.TestCase):
         self.assertEqual(feats["has_login"], 1)
         self.assertEqual(feats["has_verify"], 1)
         self.assertEqual(feats["tld"], "com")
+
+    def test_brand_match_feature(self):
+        # image.x.com has root domain "x", which is in KNOWN_BRANDS
+        feats_x = extract_features("image.x.com")
+        self.assertEqual(feats_x["brand_match"], 1)
+
+        # doc.google.com has root domain "google", which is in KNOWN_BRANDS
+        feats_google = extract_features("doc.google.com")
+        self.assertEqual(feats_google["brand_match"], 1)
+
+        # dfsdfx.cvx has root domain "dfsdfx", which is NOT in KNOWN_BRANDS
+        feats_invalid = extract_features("dfsdfx.cvx")
+        self.assertEqual(feats_invalid["brand_match"], 0)
+
+        # paypal-secure-login.com has root domain "paypal-secure-login", which is NOT in KNOWN_BRANDS
+        feats_paypal_phish = extract_features("paypal-secure-login.com")
+        self.assertEqual(feats_paypal_phish["brand_match"], 0)
+
 
     # ── 2. Inference Unit Tests ───────────────────────────────────────
 
@@ -203,6 +228,32 @@ class TestThreatIntelPipeline(unittest.TestCase):
         self.assertEqual(data[0]["domain"], "google.com")
 
     # ── 5. Edge Case Input Verification ───────────────────────────────
+
+    def test_domain_validation_logic(self):
+        # Valid cases
+        self.assertTrue(is_valid_url_or_domain("google.com"))
+        self.assertTrue(is_valid_url_or_domain("google.com/some/path"))
+        self.assertTrue(is_valid_url_or_domain("http://google.com"))
+        self.assertTrue(is_valid_url_or_domain("192.168.1.1"))
+        self.assertTrue(is_valid_url_or_domain("gооgle.com"))
+        self.assertTrue(is_valid_url_or_domain("dfsdfx.cvx"))  # Custom TLD
+        
+        # Invalid cases
+        self.assertFalse(is_valid_url_or_domain("dfsdf"))
+        self.assertFalse(is_valid_url_or_domain("12345"))
+        self.assertFalse(is_valid_url_or_domain("google.c"))
+        self.assertFalse(is_valid_url_or_domain("http://google."))
+        self.assertFalse(is_valid_url_or_domain("google .com"))
+
+    def test_api_predict_invalid_domain(self):
+        response = self.client.post("/api/predict", json={"domain": "dfsdf"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Please enter a valid URL or domain.")
+
+    def test_api_predict_batch_all_invalid(self):
+        response = self.client.post("/api/predict/batch", json={"domains": ["dfsdf", "12345"]})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Domain list must contain at least one valid URL or domain.")
 
     def test_api_predict_empty_domain(self):
         response = self.client.post("/api/predict", json={"domain": "   "})

@@ -20,6 +20,7 @@ from .schemas import (
 )
 from . import services
 from .train import run_training
+from .features import is_valid_url_or_domain
 
 router = APIRouter(prefix="/api")
 
@@ -30,6 +31,8 @@ def predict(request: DomainPredictRequest, db: Session = Depends(get_db)):
     domain = request.domain.strip()
     if not domain:
         raise HTTPException(status_code=400, detail="Domain name cannot be empty")
+    if not is_valid_url_or_domain(domain):
+        raise HTTPException(status_code=400, detail="Please enter a valid URL or domain.")
 
     try:
         return services.run_single_prediction(domain, db)
@@ -44,8 +47,12 @@ def predict_batch(request: BatchPredictRequest, db: Session = Depends(get_db)):
     if not request.domains:
         raise HTTPException(status_code=400, detail="Domain list cannot be empty")
 
+    valid_domains = [d for d in request.domains if is_valid_url_or_domain(d)]
+    if not valid_domains:
+        raise HTTPException(status_code=400, detail="Domain list must contain at least one valid URL or domain.")
+
     try:
-        predictions = services.run_batch_prediction(request.domains, db)
+        predictions = services.run_batch_prediction(valid_domains, db)
         return BatchPredictResponse(predictions=predictions)
     except Exception as e:
         db.rollback()
